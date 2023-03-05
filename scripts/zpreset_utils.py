@@ -180,7 +180,6 @@ class PresetManager(scripts.Script):
         __init__ workaround, since some data is not available during instantiation, such as is_img2img, filename, etc.
         This method is called from .show(), as that's the first method ScriptRunner calls after handing some state dat (is_txt2img, is_img2img2)
         """
-        #self.elm_prfx = f"{'txt2img' if self.is_txt2img else 'img2img'}"
         self.elm_prfx = "preset-util"
 
 
@@ -190,7 +189,7 @@ class PresetManager(scripts.Script):
         if self.is_txt2img:
             # quick set tab
             PresetManager.txt2img_preset_dropdown = gr.Dropdown(
-                label="Presets",
+                label="",
                 choices=list(PresetManager.all_presets.keys()),
                 render = False,
                 elem_id=f"{self.elm_prfx}_preset_qs_dd"
@@ -219,51 +218,9 @@ class PresetManager(scripts.Script):
         # instance level
         # quick set tab
         self.stackable_check = gr.Checkbox(value=True, label="Stackable", elem_id=f"{self.elm_prfx}_stackable_check", render=False)
-        self.save_as = gr.Text(render=False, label="Quick Save", elem_id=f"{self.elm_prfx}_save_qs_txt")
-        self.save_button = gr.Button(value="Save", variant="secondary", render=False, visible=False, elem_id=f"{self.elm_prfx}_save_qs_bttn")
-
-
-        # Detailed Save
-        self.stackable_check_det = gr.Checkbox(value=True, label="Stackable", elem_id=f"{self.elm_prfx}_stackable_check_det", render=False)
-        self.save_detail_md = gr.Markdown(render=False, value="<center>Options are all options hardcoded, and additional you added in additional_components.py</center>\
-            <center>Make your choices, adjust your settings, set a name, save. To edit a prior choice, select from dropdown and overwrite.</center>\
-            <center>To apply, go to quick set. Save now works immediately in other tab without restart, filters out non-common between tabs.</center>\
-            <center>Settings stack. If it's not checked, it wont overwrite. Apply one, then another. Reset is old, update how you need.</center>\
-                <center>Stackable checkbox is not used for saves, it's used when making a selection from the dropdown, whether to apply as stackable or not</center>", elem_id=f"{self.elm_prfx}_mess_qs_md")
-        self.save_detailed_as = gr.Text(render=False, label="Detailed Save As", elem_id=f"{self.elm_prfx}_save_ds_txt")
-        self.save_detailed_button = gr.Button(value="Save", variant="primary", render=False, visible=False, elem_id=f"{self.elm_prfx}_save_ds_bttn")
-        self.save_detailed_delete_button = gr.Button(value="❌Delete", render=False, elem_id=f"{self.elm_prfx}_del_ds_bttn")
-        # **********************************           NOTE  ********************************************
-        # NOTE: This fix uglified the code ui is now _ui, row created in before_component, stored in var, used in after_component
-        # ! TODO: Keep an eye out on this, could cause confusion, if it does, either go single checkboxes with others visible False, or ...
-        # Potential place to put this, in after_components elem_id txt_generation_info_button or img2img_generation_info button
-        #self.save_detailed_checkbox_group = gr.CheckboxGroup(render=False, choices=list(x for x in self.available_components if self.component_map[x] is not None), elem_id=f"{self.elm_prfx}_select_ds_chckgrp")
-
-
-        # Restart tab
-        self.gr_restart_bttn = gr.Button(value="Restart", variant="primary", render=False, elem_id=f"{self.elm_prfx}_restart_bttn")
-
-
-        # Print tab
-        self.gather_button = gr.Button(value="Gather", render = False, variant="primary", elem_id=f"{self.elm_prfx}_gather_bttn")         # Helper button to print component map
-        self.inspect_dd = gr.Dropdown(render = False, type="index", interactive=True, elem_id=f"{self.elm_prfx}_inspect_dd")
-        self.inspect_ta = gr.TextArea(render=False, elem_id=f"{self.elm_prfx}_inspect_txt")
-
-
-        self.info_markdown = gr.Markdown(value="<center>!⚠! THIS IS IN ALPHA !⚠!</center>\n\
-<center>🐉 I WILL INTRODUCE SOME BREAKING CHANGES (I will try to avoid it) 🐉</center>\
-<center>🙏 Please recommend your favorite script composers to implement element id's 🙏</center>\n\
-<br>\
-<center>If they implement unique element id's, they can get support for presets without making their own</center>\
-<center>❗ I have not added element id support yet, there are more labels than id's ❗</center>\
-<br>\
-<center>❗❗But labels sometimes collide. I can't do 'Mask Blur' because it also matches 'Mask Blur' in scripts❗❗</center>\
-<center>Try adding a component label to additional_components.json with element id 'null' without quotes for None</center>\
-<br>\
-<center><strong>I would like to support all custom scripts, but need script path/name/title, some distinguishing factor</strong></center>\
-<center>through the kwargs in IOComponent_init 'after_compoenet' and 'before_component'</center>\
-<center><link>https://github.com/Gerschel/sd_web_ui_preset_utils</link></center>", render=False)
-
+        self.save_as = gr.Text(render=False, label="Save", elem_id=f"{self.elm_prfx}_save_qs_txt")
+        self.save_button = gr.Button(value="💾", variant="secondary", render=False, visible=True, elem_id=f"{self.elm_prfx}_save_qs_txt")
+        # self.save_button = gr.Button(value="Save", variant="secondary", render=False, visible=True, elem_id=f"{self.elm_prfx}_save_qs_bttn")
 
     def title(self):
         return "Presets"
@@ -271,75 +228,9 @@ class PresetManager(scripts.Script):
     def show(self, is_img2img):
         self.fakeinit()
         return True
-        if self.ui_first == "sampler":
-            if shared.opts.samplers_in_dropdown:
-                self.before_component_label = "Sampling method"
-            else:
-                self.before_component_label = "Sampling Steps"
-            return True
-        else:
-            self.before_component_label = self.positon_manager
-            return True
 
     def before_component(self, component, **kwargs):
         pass
-    def _before_component(self, component, **kwargs):
-        # Define location of where to show up
-        #if kwargs.get("elem_id") == "":#f"{'txt2img' if self.is_txt2img else 'img2img'}_progress_bar":
-        #print(kwargs.get("label") == self.before_component_label, "TEST", kwargs.get("label"))
-        #if kwargs.get("label") == self.before_component_label:
-            with gr.Accordion(label="Preset Manager", open = False, elem_id=f"{'txt2img' if self.is_txt2img else 'img2img'}_preset_manager_accordion"):
-                # Quick TAB
-                with gr.Tab(label="Quick"):
-                    with gr.Row(equal_height = True):
-                            if self.is_txt2img:
-                                PresetManager.txt2img_preset_dropdown.render()
-                            else:
-                                PresetManager.img2img_preset_dropdown.render()
-                            with gr.Column(elem_id=f"{self.elm_prfx}_ref_del_col_qs"):
-                                self.stackable_check.render()
-                    with gr.Row():
-                        with gr.Column(scale=12):
-                            self.save_as.render()
-                        with gr.Column(scale=1):
-                            self.save_button.render()
-
-                # Detailed Save TAB
-                with gr.Tab(label="Detailed"):
-                    with gr.Accordion(label="Basic info", open=False):
-                        self.save_detail_md.render()
-                    with gr.Column(scale=1):
-                        with gr.Row(equal_height = True):
-                            if self.is_txt2img:
-                                PresetManager.txt2img_save_detailed_name_dropdown.render()
-                            else:
-                                PresetManager.img2img_save_detailed_name_dropdown.render()
-                            with gr.Column(elem_id=f"{self.elm_prfx}_ref_del_col_ds"):
-                                self.save_detailed_delete_button.render()
-                                self.stackable_check_det.render()
-                        with gr.Row():
-                            with gr.Column(scale=12):
-                                self.save_detailed_as.render()
-                            with gr.Column(scale=1):
-                                self.save_detailed_button.render()
-                    with gr.Column(scale=1) as detailed_check:
-                        self.detailed_check = detailed_check
-                        #self.save_detailed_checkbox_group.render()
-
-                # Restart TAB
-                with gr.Tab(label="Restart"):
-                    self.gr_restart_bttn.render()
-
-                # Print TAB
-                with gr.Tab(label = "Print"):
-                    self.gather_button.render()
-                    self.inspect_dd.render()
-                    self.inspect_ta.render()
-
-                # Info TAB
-                with gr.Tab(label="Info"):
-                    self.info_markdown.render()
-
 
     def after_component(self, component, **kwargs):
         if hasattr(component, "label") or hasattr(component, "elem_id"):
@@ -358,12 +249,22 @@ class PresetManager(scripts.Script):
             self.component_map.update({component.label: component})
         
 
-        if ele == "txt2img_generation_info_button" or ele == "img2img_generation_info_button":
-            self._before_component("")
-            self.save_detailed_checkbox_group = gr.CheckboxGroup(render=False, choices=list(x for x in self.available_components if self.component_map[x] is not None), elem_id=f"{self.elm_prfx}_select_ds_chckgrp", label="This preset affects?")
-            with self.detailed_check:
-                self.save_detailed_checkbox_group.render()
+        if ele == "txt2img_clear_prompt" or ele == "img2img_clear_prompt":
+            if self.is_txt2img:
+                PresetManager.txt2img_preset_dropdown.render()
+            else:
+                PresetManager.img2img_preset_dropdown.render()
+            # with gr.Column(elem_id=f"{self.elm_prfx}_ref_del_col_qs"):
+                # self.stackable_check.render()
             self._ui()
+
+        if ele == "txt2img_styles" or ele == "img2img_styles":
+            # with gr.Row():
+            self.save_as.render()
+            self.save_button.render()
+                # with gr.Column(scale=1):
+                    # self.save_button.render()
+            self._ui2()
 
     def ui(self, *args):
         pass
@@ -379,12 +280,6 @@ class PresetManager(scripts.Script):
                 inputs=[self.stackable_check, PresetManager.txt2img_preset_dropdown] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
                 outputs=[self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
             )
-            # Detailed save tab
-            PresetManager.txt2img_save_detailed_name_dropdown.change(
-                fn = self.save_detailed_fetch_valid_values_from_preset,
-                inputs = [self.stackable_check_det, PresetManager.txt2img_save_detailed_name_dropdown] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
-                outputs = [self.save_detailed_checkbox_group, self.save_detailed_as] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
-            )
         else:
             # Quick Set Tab
             PresetManager.img2img_preset_dropdown.change(
@@ -392,13 +287,7 @@ class PresetManager(scripts.Script):
                 inputs=[self.stackable_check, PresetManager.img2img_preset_dropdown] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
                 outputs=[self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
             )
-            # Detailed save tab
-            PresetManager.img2img_save_detailed_name_dropdown.change(
-                fn = self.save_detailed_fetch_valid_values_from_preset,
-                inputs = [self.stackable_check_det, PresetManager.img2img_save_detailed_name_dropdown] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
-                outputs = [self.save_detailed_checkbox_group, self.save_detailed_as] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
-            )
-
+    def _ui2(self):
         #Mixed Level use this section when needing to reference a class member for things that will affect both tabs
         #QuickSet Tab
         self.save_button.click(
@@ -407,49 +296,15 @@ class PresetManager(scripts.Script):
             outputs = [self.save_as, PresetManager.txt2img_preset_dropdown, PresetManager.img2img_preset_dropdown, PresetManager.txt2img_save_detailed_name_dropdown, PresetManager.img2img_save_detailed_name_dropdown]
             #outputs = [self.save_as, self.preset_dropdown, self.save_detailed_name_dropdown]
         )#Todo: class level components
-        #Detailed Tab
-        self.save_detailed_button.click(
-            fn = self.save_detailed_config(path=self.settings_file),
-            # Potential issue
-            inputs = [self.save_detailed_as , self.save_detailed_checkbox_group] + [self.component_map[comp_name] for comp_name in list(x for x in self.available_components if self.component_map[x] is not None)],
-            outputs = [self.save_detailed_as, PresetManager.txt2img_save_detailed_name_dropdown, PresetManager.img2img_save_detailed_name_dropdown, PresetManager.txt2img_preset_dropdown, PresetManager.img2img_preset_dropdown]
-            #outputs = [self.save_detailed_as, self.save_detailed_name_dropdown, self.preset_dropdown]
-        )
-        self.save_detailed_delete_button.click(
-            fn = lambda x: self.delete_preset(x, self.settings_file),
-            inputs = PresetManager.txt2img_save_detailed_name_dropdown if self.is_txt2img else PresetManager.img2img_save_detailed_name_dropdown,
-            outputs = [PresetManager.txt2img_preset_dropdown, PresetManager.img2img_preset_dropdown, PresetManager.txt2img_save_detailed_name_dropdown, PresetManager.img2img_save_detailed_name_dropdown]
-        )
-
 
         #Instance level
         #QuickSet Tab
         self.save_as.change(
-            fn = lambda x: gr.update(variant = "primary" if bool(x) else "secondary", visible = bool(x)),
+            # fn = lambda x: gr.update(variant = "primary" if bool(x) else "secondary", visible = bool(x)),
+            fn = lambda x: gr.update(variant = "primary" if bool(x) else "secondary"),
             inputs = self.save_as,
             outputs = self.save_button
         )
-
-        # Detailed save tab
-        self.save_detailed_as.change(
-            fn = lambda x: gr.update(visible = bool(x)),
-            inputs = self.save_detailed_as,
-            outputs = self.save_detailed_button
-        )
-        # Restart Tab
-        self.gr_restart_bttn.click(fn=self.local_request_restart, _js='restart_reload', inputs=[], outputs=[])
-
-        # Print/Inspect Tab
-        self.gather_button.click(
-            fn = self.f_b_syncer,
-            outputs=[self.inspect_dd, self.gather_button]
-        )
-        self.inspect_dd.change(
-            fn = lambda x: self.inspection_formatter(x),
-            inputs = self.inspect_dd,
-            outputs = self.inspect_ta,
-        )
-
 
     def f_b_syncer(self):
         """

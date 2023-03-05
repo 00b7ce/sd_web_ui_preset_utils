@@ -37,8 +37,29 @@
 }
 
 
-#preset-util_save_qs_bttn, #preset-util_save_ds_bttn{
-    min-height: 100% !important;
+#txt2img_styles_row, #img2img_styles_row {
+    display: grid !important;
+    grid-template-columns: 4fr 1fr !important;
+}
+
+button#preset-util_save_qs_txt {
+    height: 70%;
+    margin-top: 10px;
+}
+
+#txt2img_clear_prompt, #paste, #txt2img_extra_networks, #txt2img_style_apply, #txt2img_style_create, #txt2img_styles, #refresh_txt2img_styles {
+    display: none;
+}
+
+#img2img_clear_prompt, #paste, #img2img_extra_networks, #img2img_style_apply, #img2img_style_create, #img2img_styles, #refresh_img2img_styles {
+    display: none;
+}
+
+#preset-util_preset_qs_dd label span {
+    display: none;
+}
+#preset-util_preset_qs_dd label select {
+    display: block;
 }
 /*
 @media (min-width: 708px){
