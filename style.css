@@ -1,4 +1,4 @@
-#preset-util_ref_del_col_qs, #preset-util_ref_del_col_ds{
+#quick_preset_ref_del_col_qs, #quick_preset_ref_del_col_ds{
     min-width: unset !important;
     min-height: unset !important;
     flex-grow: 0 !important;
@@ -6,11 +6,7 @@
     row-gap: 0;
 }
 
-#preset-util_ref_del_col_qs > button, #preset-util_ref_del_col_ds > button{
-    /*
-    min-width: 2em;
-    min-height: 2em;
-    */
+#quick_preset_ref_del_col_qs > button, #quick_preset_ref_del_col_ds > button{
     max-width: 1.4em;
     max-height: 1.4em;
     flex-grow: 0;
@@ -19,11 +15,11 @@
     margin: 0.1em 0;
 }
 
-#preset-util_ref_del_col_ds > button[id=preset-util_del_ds_bttn]{
+#quick_preset_ref_del_col_ds > button[id=quick_preset_del_ds_bttn]{
     max-width: unset;
     max-height: 1.75em;
 }
-#preset-util_ref_del_col_qs > div[class*=gr-form], #preset-util_ref_del_col_ds > div[class*=gr-form]{
+#quick_preset_ref_del_col_qs > div[class*=gr-form], #quick_preset_ref_del_col_ds > div[class*=gr-form]{
     min-width: unset !important;
     min-height: unset !important;
     padding-left: 0.25em;
@@ -32,7 +28,7 @@
     flex-grow: 0;
 }
 
-#preset-util_ref_del_col_qs div[id=preset_util_stackable_check_det], #preset-util_ref_del_col_ds div[id=preset_util_stackable_check_det]{
+#quick_preset_ref_del_col_qs div[id=preset_util_stackable_check_det], #quick_preset_ref_del_col_ds div[id=preset_util_stackable_check_det]{
     padding: 0.125em;
 }
 
@@ -42,7 +38,7 @@
     grid-template-columns: 4fr 1fr !important;
 }
 
-button#preset-util_save_qs_txt {
+button#quick_preset_save {
     height: 70%;
     margin-top: 10px;
 }
@@ -55,9 +51,9 @@ button#preset-util_save_qs_txt {
     display: none;
 }
 
-#preset-util_preset_qs_dd label span {
+#quick_preset_preset_dd label span {
     display: none;
 }
-#preset-util_preset_qs_dd label select {
+#quick_preset_preset_dd label select {
     display: block;
 }
