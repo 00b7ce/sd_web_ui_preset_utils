@@ -12,9 +12,6 @@ from pathlib import Path
 
 update_flag = "preset_manager_update_check"
 
-additional_config_source = "additional_components.json"
-additional_config_target = "additional_configs.json"
-presets_config_source = "preset_configuration.json"
 presets_config_target = "presets.json"
 
 file_path = scripts.basedir() # file_path is basedir
@@ -23,25 +20,7 @@ path_to_update_flag = os.path.join(scripts_path, update_flag)
 is_update_available = False
 if os.path.exists(path_to_update_flag):
     is_update_available = True
-    source_path = os.path.join(file_path, additional_config_source)
-    target_path = os.path.join(file_path, additional_config_target)
-    if not os.path.exists(target_path):
-        shutil.move(source_path, target_path)
-        print(f"Created: {additional_config_target}")
-    else:
-        print(f"Not writing {additional_config_target}: config exists already")
                     
-    source_path = os.path.join(file_path, presets_config_source)
-    target_path = os.path.join(file_path, presets_config_target)
-    if not os.path.exists(target_path):
-        shutil.move(source_path, target_path)
-        print(f"Created: {presets_config_target}")
-    else:
-        print(f"Not writing {presets_config_target}: config exists already")
-    os.remove(path_to_update_flag)
-
-
-
 class PresetManager(scripts.Script):
 
     BASEDIR = scripts.basedir()
@@ -50,68 +29,33 @@ class PresetManager(scripts.Script):
         if preset.get(oldval) is not None:
             preset[newval] = preset.pop(oldval)
 
-    def update_config(self):
-        """This is a as per need method that will change per need"""
-        component_remap = {
-            "Highres. fix": "Hires. fix",
-            "Firstpass width": "Upscaler",
-            "Firstpass height": "Upscale by",
-            "Sampling Steps": "Sampling steps"
-            }
-        config = self.get_config(self.settings_file)
-        for preset in config.values():
-            for old_val, new_val in component_remap.items():
-                self.update_component_name(preset, old_val, new_val)
-                    
-        #PresetManager.all_presets = config
-        self.save_config(self.settings_file, config)
-
-
     def __init__(self, *args, **kwargs):
         
         self.compinfo = namedtuple("CompInfo", ["component", "label", "elem_id", "kwargs"])
 
-        #self.settings_file = "preset_configuration.json"
         self.settings_file = "presets.json"
-        #self.additional_settings_file = "additional_components.json"
-        self.additional_settings_file = "additional_configs.json"
 
-
-        self.additional_components_for_presets = self.get_config(self.additional_settings_file) #additionalComponents
         self.available_components = [
-            "Prompt",
-            "Negative prompt",
-            "Sampling steps",
-            "Sampling method",
-            "Width",
-            "Height",
-            "Restore faces",
-            "Tiling",
-            "Hires. fix",#new
-            "Highres. fix",#old
-            "Upscaler",#new
-            "Upscale by",#new
-            "Hires. steps",#New
-            "Resize width to",#New
-            "Resize height to",#New
-            "Seed",
-            "Extra",
-            "Variation seed",
-            "Variation strength",
-            "Resize seed from width",
-            "Resize seed from height",
-            "Firstpass width",#old now is upscaler
-            "Firstpass height",#old now is upscale by
-            "Denoising strength",
-            "Batch count",
-            "Batch size",
-            "CFG Scale",
-            "Script",
+            "txt2img_prompt",
+            "txt2img_neg_prompt",
+            "txt2img_sampling",
+            "txt2img_steps",
+            "txt2img_restore_faces",
+            "txt2img_tiling",
+            "txt2img_enable_hr",
+            "txt2img_hr_upscaler",
+            "txt2img_hires_steps",
+            "txt2img_denoising_strength",
+            "txt2img_hr_scale",
+            "txt2img_hr_resize_x",
+            "txt2img_hr_resize_y",
+            "txt2img_width",
+            "txt2img_height",
+            "txt2img_batch_count",
+            "txt2img_batch_size",
+            "txt2img_cfg_scale",
         ]
         
-        if is_update_available:
-            self.update_config()
-
         # components that pass through after_components
         self.all_components = []
 
@@ -120,15 +64,7 @@ class PresetManager(scripts.Script):
 
         # Initialize
         self.component_map = {k: None for k in self.available_components}
-        self.additional_components_map = {k:None for k in self.additional_components_for_presets["additionalComponents"]}
-        self.additional_components = [x for x in self.additional_components_map] # acts like available_components list for additional components
 
-        # combine defaults and choices
-        self.component_map = {**self.component_map, **self.additional_components_map}
-        self.available_components = self.available_components + self.additional_components
-
-
-    
     def fakeinit(self, *args, **kwargs):
         """
         __init__ workaround, since some data is not available during instantiation, such as is_img2img, filename, etc.
@@ -136,11 +72,7 @@ class PresetManager(scripts.Script):
         """
         self.elm_prfx = "preset-util"
 
-        # UI elements
-        # class level
-        # NOTE: Would love to use one component rendered twice, but gradio does not allow rendering twice, so I need one per page
         if self.is_txt2img:
-            # quick set tab
             PresetManager.txt2img_preset_dropdown = gr.Dropdown(
                 label="",
                 choices=list(PresetManager.all_presets.keys()),
@@ -170,6 +102,7 @@ class PresetManager(scripts.Script):
         pass
 
     def after_component(self, component, **kwargs):
+
         if hasattr(component, "label") or hasattr(component, "elem_id"):
             self.all_components.append(self.compinfo(
                                                     component=component,
@@ -183,7 +116,6 @@ class PresetManager(scripts.Script):
         if label in self.component_map:
             self.component_map.update({component.label: component})
         
-
         if ele == "txt2img_clear_prompt" or ele == "img2img_clear_prompt":
             if self.is_txt2img:
                 PresetManager.txt2img_preset_dropdown.render()
@@ -199,18 +131,27 @@ class PresetManager(scripts.Script):
     def ui(self, *args):
         pass
 
+    #####TODO
+    def preset_dropdown_change(self, selection, *comps_vals):
+        print(self.component_map.keys())
+
     def _ui(self):
-        # Conditional for class members
         if self.is_txt2img:
             PresetManager.txt2img_preset_dropdown.change(
                 fn=self.preset_dropdown_change,
-                inputs=PresetManager.txt2img_preset_dropdown,
+                inputs=[],
                 outputs=[],
+            )
+            PresetManager.txt2img_preset_dropdown.change(
+                fn=None,
+                inputs=[],
+                outputs=[],
+                _js="config_preset_dropdown_change",
             )
         else:
             PresetManager.img2img_preset_dropdown.change(
                 fn=self.preset_dropdown_change,
-                inputs=PresetManager.img2img_preset_dropdown,
+                inputs=[],
                 outputs=[],
             )
     def _ui2(self):
@@ -230,11 +171,17 @@ class PresetManager(scripts.Script):
         pass
 
     #####TODO
-    def preset_dropdown_change(self, selector):
-        print(selector)
-    #####TODO
     def save_config(self, config_name):
         print(config_name)
+
+    def f_b_syncer(self):
+        """
+        ?Front/Backend synchronizer?
+        Not knowing what else to call it, simple idea, rough to figure out. When updating choices on the front-end, back-end isn't updated, make them both match
+        https://github.com/gradio-app/gradio/discussions/2848
+        """
+        self.inspect_dd.choices = [str(x) for x in self.all_components]
+        return [gr.update(choices=[str(x) for x in self.all_components]), gr.Button.update(visible=False)]
 
     def get_config(self, path, open_mode='r'):
         file = os.path.join(PresetManager.BASEDIR, path)

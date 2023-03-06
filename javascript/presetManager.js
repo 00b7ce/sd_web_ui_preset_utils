@@ -1,3 +1,61 @@
+function config_preset_dropdown_change() {
+
+    const root = gradioApp()
+
+    const prompt          = root.querySelector('#txt2img_prompt').querySelector('label').querySelector('textarea');
+    const neg_prompt      = root.querySelector('#txt2img_neg_prompt').querySelector('label').querySelector('textarea');
+    const sampler         = root.querySelector('#txt2img_sampling').querySelector('label').querySelector('select');
+    const steps           = root.querySelector('#txt2img_steps').querySelector('input');
+    const is_restore_face = root.querySelector('#txt2img_restore_faces').querySelector('input');
+    const is_tiling       = root.querySelector('#txt2img_tiling').querySelector('input');
+    const is_hires_fix    = root.querySelector('#txt2img_enable_hr').querySelector('input');
+    const hires_sampler   = root.querySelector('#txt2img_hr_upscaler').querySelector('input');
+    const hires_steps     = root.querySelector('#txt2img_hires_steps').querySelector('input');
+    const hires_denoising = root.querySelector('#txt2img_denoising_strength').querySelector('input');
+    const hires_upscale   = root.querySelector('#txt2img_hr_scale').querySelector('input');
+    const hires_width     = root.querySelector('#txt2img_hr_resize_x').querySelector('input');
+    const hires_height    = root.querySelector('#txt2img_hr_resize_y').querySelector('input');
+    const img_width       = root.querySelector('#txt2img_width').querySelector('input');
+    const img_height      = root.querySelector('#txt2img_height').querySelector('input');
+    const batch_count     = root.querySelector('#txt2img_batch_count').querySelector('input');
+    const batch_size      = root.querySelector('#txt2img_batch_size').querySelector('input');
+    const cfg_scale       = root.querySelector('#txt2img_cfg_scale').querySelector('input');
+
+    // prompt.value            = 'unko';
+    // neg_prompt.value        = 'chinko';
+    // sampler.value           = 'Euler';
+    // steps.value             = 5;
+    // is_restore_face.checked = true;
+    // is_tiling.checked       = true;
+    // is_hires_fix.checked    = true;
+    // // hires_sampler.value     = ;
+    // // hires_steps.value       = ;
+    // // hires_denoising.value   = ;
+    // // hires_upscale.value     = ;
+    // // hires_width.value       = ;
+    // // hires_height.value      = ;
+    // img_width.value         = 680;
+    // img_height.value        = 1024;
+    // batch_count.value       = 50;
+    // batch_size.value        = 5;
+    // cfg_scale.value         = 10;
+
+	setTimeout(function() { 
+		let hiresFixCheckbox = gradioApp().querySelector("#txt2img_enable_hr > label").firstChild //gets the <input> element next to the "Hires. fix" <span>
+		
+		let e = document.createEvent("HTMLEvents")
+		e.initEvent("change", true, false)
+		hiresFixCheckbox.dispatchEvent(e)
+		
+		//console.log("hiresFixCheckbox="+hiresFixCheckbox)
+		//console.log("e="+e)
+	}, 200) //50ms is too fast
+
+    return []
+}
+
+
+
 // class PresetManagerDropdownComponent{
 //     constructor(component){
 //         this.component = gradioApp().getElementById(component)
