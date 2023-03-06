@@ -40,8 +40,25 @@ class QuickPreset(scripts.Script):
             "txt2img_cfg_scale",
         ]
 
-        self.t2i_component_map = {k: None for k in self.t2i_component_ids}
+        self.i2i_component_ids = [
+            "img2img_prompt",
+            "img2img_neg_prompt",
+            "img2img_sampling",
+            "img2img_steps",
+            "img2img_restore_faces",
+            "img2img_tiling",
+            "img2img_width",
+            "img2img_height",
+            "img2img_denoising_strength",
+            "img2img_batch_count",
+            "img2img_batch_size",
+            "img2img_cfg_scale",
+        ]
 
+        self.t2i_component_map = {k: None for k in self.t2i_component_ids}
+        self.i2i_component_map = {k: None for k in self.i2i_component_ids}
+
+        # text2img
         try:
             with open(f"{BASEDIR}/{CONFIG_T2I_FILENAME}") as f:
                 self.t2i_presets = json.load(f)
@@ -66,6 +83,31 @@ class QuickPreset(scripts.Script):
             with open(f"{BASEDIR}/{CONFIG_T2I_FILENAME}", "w") as f:
                 f.write(json_object)
 
+        # img2img
+        try:
+            with open(f"{BASEDIR}/{CONFIG_I2I_FILENAME}") as f:
+                self.i2i_presets = json.load(f)
+        except FileNotFoundError:
+            self.i2i_presets = {
+                "Reset": {
+                    "img2img_prompt": "",
+                    "img2img_neg_prompt": "",
+                    "img2img_sampling": "Euler a",
+                    "img2img_steps": 20,
+                    "img2img_restore_faces": False,
+                    "img2img_tiling": False,
+                    "img2img_width": 512,
+                    "img2img_height": 512,
+                    "img2img_denoising_strength": 0.7,
+                    "img2img_batch_count": 1,
+                    "img2img_batch_size": 1,
+                    "img2img_cfg_scale": 7,
+                },
+            }
+            json_object = json.dumps(self.i2i_presets, indent=4)
+            with open(f"{BASEDIR}/{CONFIG_I2I_FILENAME}", "w") as f:
+                f.write(json_object)
+
 
     def fakeinit(self, *args, **kwargs):
         self.elm_prfx = "quick_preset"
@@ -74,6 +116,13 @@ class QuickPreset(scripts.Script):
             QuickPreset.t2i_dropdown = gr.Dropdown(
                 label="",
                 choices=list(self.t2i_presets.keys()),
+                render = False,
+                elem_id=f"{self.elm_prfx}_preset_dd"
+            )
+        else:
+            QuickPreset.i2i_dropdown = gr.Dropdown(
+                label="",
+                choices=list(self.i2i_presets.keys()),
                 render = False,
                 elem_id=f"{self.elm_prfx}_preset_dd"
             )
@@ -88,15 +137,27 @@ class QuickPreset(scripts.Script):
         return scripts.AlwaysVisible
     
     def after_component(self, component, **kwargs):
-        self.component_map = self.t2i_component_map
-        self.component_ids = self.t2i_component_ids
-        self.config_file_name = CONFIG_T2I_FILENAME
+
+        self.component_map    = None
+        self.component_ids    = None
+        self.config_file_name = None
+
+        if self.is_txt2img:
+            self.component_map    = self.t2i_component_map
+            self.component_ids    = self.t2i_component_ids
+            self.config_file_name = CONFIG_T2I_FILENAME
+            self.config_presets   = self.t2i_presets
+        else:
+            self.component_map    = self.i2i_component_map
+            self.component_ids    = self.i2i_component_ids
+            self.config_file_name = CONFIG_I2I_FILENAME
+            self.config_presets   = self.i2i_presets
 
         if component.elem_id in self.component_map:
             self.component_map[component.elem_id] = component
 
         # Setting
-        if component.elem_id == "txt2img_generation_info_button":
+        if component.elem_id == "txt2img_generation_info_button" or component.elem_id == "img2img_generation_info_button":
             for component_name, component in self.component_map.items():
                 if component is None:
                     print(f"[ERROR][Config-Presets] The component '{component_name}' no longer exists in the Web UI. Try updating the Config-Presets extension. This extension will not work until this issue is resolved.")
@@ -109,18 +170,21 @@ class QuickPreset(scripts.Script):
             self._ui()
 
         # presets
-        self.config_presets = self.t2i_presets
+        # self.config_presets = self.t2i_presets
 
         # UI 
-        if component.elem_id == "txt2img_clear_prompt":
-            QuickPreset.t2i_dropdown.render()
-        if component.elem_id == "txt2img_styles":
+        if component.elem_id == "txt2img_clear_prompt" or component.elem_id == "img2img_clear_prompt":
+            if self.is_txt2img:
+                QuickPreset.t2i_dropdown.render()
+            else:
+                QuickPreset.i2i_dropdown.render()
+        if component.elem_id == "txt2img_styles" or component.elem_id == "img2img_styles":
             self.save_as.render()
             self.save_button.render()
 
     # Change dropdown event
     def preset_dropdown_change(self, selector, *components):
-        config_preset = self.t2i_presets[selector]
+        config_preset = self.config_presets[selector]
         current_components = dict(zip(self.component_map.keys(), components))
         current_components.update(config_preset)
 
@@ -133,29 +197,52 @@ class QuickPreset(scripts.Script):
     # UI configuration
     def _ui(self):
         components = list(self.component_map.values())
-        QuickPreset.t2i_dropdown.change(
-            fn = self.preset_dropdown_change,
-            show_progress = False,
-            inputs = [QuickPreset.t2i_dropdown, *components],
-            outputs = components
-        )
-        QuickPreset.t2i_dropdown.change(
-            fn = None,
-            show_progress = False,
-            inputs = [],
-            outputs = [],
-            _js = "config_preset_dropdown_change()"
-        )
+        if self.is_txt2img:
+            QuickPreset.t2i_dropdown.change(
+                fn = self.preset_dropdown_change,
+                show_progress = False,
+                inputs = [QuickPreset.t2i_dropdown, *components],
+                outputs = components
+            )
+            QuickPreset.t2i_dropdown.change(
+                fn = None,
+                show_progress = False,
+                inputs = [],
+                outputs = [],
+                _js = "config_preset_dropdown_change()"
+            )
+            self.save_button.click(
+                fn=save_config(self.config_presets, self.component_map, self.config_file_name),
+                show_progress=False,
+                inputs=[self.save_as] + [self.component_map[comp_name] for comp_name in self.component_ids if self.component_map[comp_name] is not None],
+                outputs=[self.save_as, QuickPreset.t2i_dropdown]
+            )
+        else:
+            QuickPreset.i2i_dropdown.change(
+                fn = self.preset_dropdown_change,
+                show_progress = False,
+                inputs = [QuickPreset.i2i_dropdown, *components],
+                outputs = components
+            )
+            QuickPreset.i2i_dropdown.change(
+                fn = None,
+                show_progress = False,
+                inputs = [],
+                outputs = [],
+                _js = "config_preset_dropdown_change()"
+            )
+            self.save_button.click(
+                fn=save_config(self.config_presets, self.component_map, self.config_file_name),
+                show_progress=False,
+                inputs=[self.save_as] + [self.component_map[comp_name] for comp_name in self.component_ids if self.component_map[comp_name] is not None],
+                outputs=[self.save_as, QuickPreset.i2i_dropdown]
+            )
         self.save_as.change(
             fn = lambda x: gr.update(variant = "primary" if bool(x) else "secondary"),
             inputs = self.save_as,
             outputs = self.save_button
         )
-        self.save_button.click(
-            fn=save_config(self.config_presets, self.component_map, self.config_file_name),
-            inputs=[self.save_as] + [self.component_map[comp_name] for comp_name in self.component_ids if self.component_map[comp_name] is not None],
-            outputs=[self.save_as, QuickPreset.t2i_dropdown]
-        )
+
 
 def save_config(config_presets, component_map, config_file_name):
     def func(new_setting_name, *new_setting):
