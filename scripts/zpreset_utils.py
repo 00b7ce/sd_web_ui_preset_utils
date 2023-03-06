@@ -21,7 +21,7 @@ is_update_available = False
 if os.path.exists(path_to_update_flag):
     is_update_available = True
                     
-class PresetManager(scripts.Script):
+class QuickPreset(scripts.Script):
 
     BASEDIR = scripts.basedir()
 
@@ -32,7 +32,7 @@ class PresetManager(scripts.Script):
 
         self.settings_file = "presets.json"
 
-        self.txt2img_component_ids = [
+        self.t2i_component_ids = [
             "txt2img_prompt",
             "txt2img_neg_prompt",
             "txt2img_sampling",
@@ -53,9 +53,9 @@ class PresetManager(scripts.Script):
             "txt2img_cfg_scale",
         ]
 
-        self.txt2img_component_map = {k: None for k in self.txt2img_component_ids}
+        self.t2i_component_map = {k: None for k in self.t2i_component_ids}
 
-        self.txt2img_config_presets = {
+        self.t2i_presets = {
             "Default": {},
             "Low quality ------ 512x512, steps: 10, batch size: 8, DPM++ 2M Karras": {
                 "txt2img_sampling": "DPM++ 2M Karras",
@@ -72,9 +72,9 @@ class PresetManager(scripts.Script):
         self.elm_prfx = "quick_preset"
 
         if self.is_txt2img:
-            PresetManager.t2i_preset_dropdown = gr.Dropdown(
+            QuickPreset.t2i_dropdown = gr.Dropdown(
                 label="",
-                choices=list(self.txt2img_config_presets.keys()),
+                choices=list(self.t2i_presets.keys()),
                 render = False,
                 elem_id=f"{self.elm_prfx}_preset_dd"
             )
@@ -89,9 +89,8 @@ class PresetManager(scripts.Script):
         return scripts.AlwaysVisible
     
     def after_component(self, component, **kwargs):
-
-        self.component_map = self.txt2img_component_map
-        self.component_ids = self.txt2img_component_ids
+        self.component_map = self.t2i_component_map
+        self.component_ids = self.t2i_component_ids
 
         if component.elem_id in self.component_map:
             self.component_map[component.elem_id] = component
@@ -110,14 +109,15 @@ class PresetManager(scripts.Script):
             self._ui()
 
         if component.elem_id == "txt2img_clear_prompt":
-            PresetManager.t2i_preset_dropdown.render()
+            QuickPreset.t2i_dropdown.render()
 
         if component.elem_id == "txt2img_styles":
             self.save_as.render()
             self.save_button.render()
 
+    # Change dropdown event
     def preset_dropdown_change(self, selector, *components):
-        config_preset = self.txt2img_config_presets[selector]
+        config_preset = self.t2i_presets[selector]
         current_components = dict(zip(self.component_map.keys(), components))
         current_components.update(config_preset)
 
@@ -127,11 +127,12 @@ class PresetManager(scripts.Script):
 
         return list(current_components.values())
 
+    # UI configuration
     def _ui(self):
         components = list(self.component_map.values())
-        PresetManager.t2i_preset_dropdown.change(
+        QuickPreset.t2i_dropdown.change(
             fn = self.preset_dropdown_change,
-            inputs = [PresetManager.t2i_preset_dropdown, *components],
+            inputs = [QuickPreset.t2i_dropdown, *components],
             outputs = components
         )
         self.save_as.change(
